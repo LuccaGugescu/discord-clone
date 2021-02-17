@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './SideBar.css';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import AddIcon from '@material-ui/icons/Add';
@@ -8,7 +8,32 @@ import { Call, Headset, InfoOutlined, Mic, Settings, SignalCellularAlt } from '@
 import { useSelector } from 'react-redux';
 import { selectUser } from '../slices/userSlice';
 import firebase from 'firebase';
-function SideBar() {                                                                                                                                                                                                                                                   const {uid, photo, displayName} = useSelector(selectUser); 
+import db from '../utils/firebase';
+
+function SideBar() {      
+    const {uid, photo, displayName} = useSelector(selectUser);
+    const [channels, setChannels] = useState([]);
+
+    useEffect(() => {
+        db.collection("channels").onSnapshot(snapshot => (
+            setChannels(snapshot.docs.map(doc => ({
+                id: doc.id,
+                channel: doc.data(),
+
+            })))
+        ))
+    }, []);
+
+    const handleAddChannel = () => {
+        const channelName = prompt("Enter a new channel name");
+        if (channelName) {
+            db.collection("channels").add({
+                channelName,
+
+            })
+        }
+    }
+
     return (
         <div className="sideBar">
 
@@ -23,13 +48,14 @@ function SideBar() {                                                            
                         <ExpandMoreIcon />
                         <h4>Text Channels</h4>
                     </div>
-                    <AddIcon className="sideBar__addChannel"/>
+                    <AddIcon className="sideBar__addChannel" onClick={handleAddChannel} />
                 </div>
                 <div className="sideBar__channelsList">
-                    <SideBarChannel />
-                    <SideBarChannel />
-                    <SideBarChannel />
-                    <SideBarChannel />
+                {
+                    channels.map(({id, channel}) => (
+                        <SideBarChannel key={id} id={id} channelName={channel.channelName} />
+                    ))
+                }
                 </div>
             </div>
                 <div className="sideBar__voice">
